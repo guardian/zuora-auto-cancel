@@ -45,10 +45,9 @@ object GuardianWeeklyFulfilmentDates extends FulfilmentConstants(
   }
 
   def holidayStopProcessorTargetDate(today: LocalDate): Option[LocalDate] = {
-    if(today.getDayOfWeek == fulfilmentGenerationDayOfWeek.minus(1)){
+    if (today.getDayOfWeek == fulfilmentGenerationDayOfWeek.minus(1)) {
       Some(today `with` next(issueDayOfWeek) `with` next(issueDayOfWeek)) // issue day after next
-    }
-    else {
+    } else {
       None
     }
   }
@@ -65,7 +64,7 @@ object GuardianWeeklyFulfilmentDates extends FulfilmentConstants(
 
     val todayIsFufilmentDay = today.getDayOfWeek equals fulfilmentGenerationDayOfWeek
 
-    if(todayIsFufilmentDay)
+    if (todayIsFufilmentDay)
       (today `with` next(issueDayOfWeek) `with` next(issueDayOfWeek) `with` next(issueDayOfWeek))
     else
       (today `with` next(issueDayOfWeek) `with` next(issueDayOfWeek))

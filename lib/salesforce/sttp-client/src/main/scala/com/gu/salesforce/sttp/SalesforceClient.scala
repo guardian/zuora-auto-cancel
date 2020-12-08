@@ -32,7 +32,7 @@ object SalesforceClient extends LazyLogging {
   // A Unit decoder decodes everything as a Unit
   private implicit val unitDecoder: Decoder[Unit] = _ => Right(())
 
-  def apply[F[_] : Sync, S](
+  def apply[F[_]: Sync, S](
     backend: SttpBackend[F, S],
     config: SFAuthConfig
   ): EitherT[F, SalesforceClientError, SalesforceClient[F]] = {
@@ -148,8 +148,7 @@ object SalesforceClient extends LazyLogging {
           parsedBody.left.map(deserializationError =>
             SalesforceClientError(
               s"Request ${request.method.m} ${request.uri.toString()} failed to parse response: $deserializationError"
-            )
-          )
+            ))
         }
     }
 
@@ -183,7 +182,7 @@ object SalesforceClient extends LazyLogging {
         }
 
         override def patch[REQ_BODY: Encoder](objectName: String, objectId: String, body: REQ_BODY): EitherT[F, SalesforceClientError, Unit] = {
-          val uri = Uri(new URI(s"${ auth.instance_url }$sfObjectsBaseUrl$objectName/$objectId"))
+          val uri = Uri(new URI(s"${auth.instance_url}$sfObjectsBaseUrl$objectName/$objectId"))
           for {
             _ <- logQuery(s"$objectName $objectId PATCH with '$body'")
             _ <- sendAuthenticatedRequestWithOptionalBody[REQ_BODY, Unit](auth, Method.PATCH, uri, Some(body))
@@ -201,19 +200,18 @@ object SalesforceClient extends LazyLogging {
             Uri(new URI(auth.instance_url + compositeBaseUrl)),
             Some(body)
           ).flatMap(response =>
-            // this is necessary because for some bizarre reason composite requests return a 200 even if the sub-requests fail
-            // see https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/requests_composite.htm
-            response.compositeResponse.filterNot(part => successStatusCodes.contains(part.httpStatusCode)).toNel.fold(
-              response.asRight[SalesforceClientError] // no inner failures so return response
-            )(
-              failureCodes =>
-                SalesforceClientError(
-                  failureCodes
-                    .map(part => s"${part.httpStatusCode} (${part.referenceId})")
-                    .mkString_("Composite Failure Status Codes : ", ", ", "")
-                ).asLeft[SFApiCompositeResponse]
-            ).toEitherT[F]
-          )
+              // this is necessary because for some bizarre reason composite requests return a 200 even if the sub-requests fail
+              // see https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/requests_composite.htm
+              response.compositeResponse.filterNot(part => successStatusCodes.contains(part.httpStatusCode)).toNel.fold(
+                response.asRight[SalesforceClientError] // no inner failures so return response
+              )(
+                  failureCodes =>
+                    SalesforceClientError(
+                      failureCodes
+                        .map(part => s"${part.httpStatusCode} (${part.referenceId})")
+                        .mkString_("Composite Failure Status Codes : ", ", ", "")
+                    ).asLeft[SFApiCompositeResponse]
+                ).toEitherT[F])
         }
       }
     } yield client

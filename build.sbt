@@ -19,14 +19,6 @@ val scalaSettings = Seq(
     "-Ywarn-value-discard"
   ),
   fork in Test := true,
-  {
-    import scalariform.formatter.preferences._
-    scalariformPreferences := scalariformPreferences.value
-      .setPreference(DanglingCloseParenthesis, Force)
-      .setPreference(SpacesAroundMultiImports, false)
-      .setPreference(NewlineAtEndOfFile, true)
-  },
-
   autoCompilerPlugins := true,
   resolvers += "Guardian Platform Bintray" at "https://dl.bintray.com/guardian/platforms"
 )

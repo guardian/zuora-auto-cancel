@@ -36,8 +36,7 @@ object DigitalVoucherService {
     )
   }
 
-  def apply[F[_]: Monad](imovoClient: ImovoClient[F]): DigitalVoucherService[F] = new
-      DigitalVoucherService[F] {
+  def apply[F[_]: Monad](imovoClient: ImovoClient[F]): DigitalVoucherService[F] = new DigitalVoucherService[F] {
 
     override def createVoucher(
       subscriptionId: SfSubscriptionId,
@@ -73,18 +72,18 @@ object DigitalVoucherService {
     def toVoucher(voucherResponse: ImovoSubscriptionResponse): Either[DigitalVoucherServiceError, SubscriptionVouchers] = {
       (
         voucherResponse
-          .subscriptionVouchers
-          .find(_.subscriptionType === ImovoSubscriptionType.ActiveLetter.value)
-          .toRight(List("Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveLetter\" ")),
+        .subscriptionVouchers
+        .find(_.subscriptionType === ImovoSubscriptionType.ActiveLetter.value)
+        .toRight(List("Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveLetter\" ")),
         voucherResponse
-          .subscriptionVouchers
-          .find(_.subscriptionType === ImovoSubscriptionType.ActiveCard.value)
-          .toRight(List("Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveCard\" "))
+        .subscriptionVouchers
+        .find(_.subscriptionType === ImovoSubscriptionType.ActiveCard.value)
+        .toRight(List("Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveCard\" "))
       ).parMapN { (letterVoucher, cardVoucher) =>
-        SubscriptionVouchers(cardVoucher.voucherCode, letterVoucher.voucherCode)
-      }.leftMap { errors =>
-        DigitalVoucherServiceFailure(errors.mkString(","))
-      }
+          SubscriptionVouchers(cardVoucher.voucherCode, letterVoucher.voucherCode)
+        }.leftMap { errors =>
+          DigitalVoucherServiceFailure(errors.mkString(","))
+        }
     }
 
     def toReplacementVoucher(voucherResponse: ImovoSubscriptionResponse): Either[DigitalVoucherServiceError, ReplacementSubscriptionVouchers] = {
@@ -96,8 +95,10 @@ object DigitalVoucherService {
         case (Some(card), None) => Right(ReplacementSubscriptionVouchers(Some(card.voucherCode), None))
         case (None, Some(letter)) => Right(ReplacementSubscriptionVouchers(None, Some(letter.voucherCode)))
         case _ => {
-          Left(DigitalVoucherServiceFailure(List("Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveLetter\" ",
-            "Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveCard\" ").mkString(",")))
+          Left(DigitalVoucherServiceFailure(List(
+            "Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveLetter\" ",
+            "Imovo response did not contain an subscription voucher where subscriptionType==\"ActiveCard\" "
+          ).mkString(",")))
         }
       }
     }
@@ -128,9 +129,9 @@ object DigitalVoucherService {
     }
 
     def suspendVoucher(subscriptionId: SfSubscriptionId, startDate: LocalDate, endDateExclusive: LocalDate): EitherT[F, DigitalVoucherServiceError, Unit] =
-       imovoClient
-          .suspendSubscriptionVoucher(subscriptionId, startDate, endDateExclusive)
-         .bimap(error => ImovoOperationFailedException(error.message), _ => ())
+      imovoClient
+        .suspendSubscriptionVoucher(subscriptionId, startDate, endDateExclusive)
+        .bimap(error => ImovoOperationFailedException(error.message), _ => ())
 
     override def getRedemptionHistory(subscriptionId: String): EitherT[F, DigitalVoucherServiceError, RedemptionHistory] = {
       imovoClient

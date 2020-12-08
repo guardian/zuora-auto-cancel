@@ -6,7 +6,6 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import scalaj.http.{Http, HttpRequest, HttpResponse}
 
-
 class SalesforceConnector(runRequest: HttpRequest => Either[ContactUsError, HttpResponse[String]]) {
 
   def handle(req: SFCompositeRequest): Either[ContactUsError, Unit] = {
@@ -37,8 +36,7 @@ class SalesforceConnector(runRequest: HttpRequest => Either[ContactUsError, Http
         else
           decode[SFAuthFailure](response.body, Some("SFAuthFailure"))
             .flatMap(value =>
-              Left(ContactUsError("Salesforce", s"Could not authenticate: Status code: ${response.code}. ${value.error} - ${value.error_description}"))
-            )
+              Left(ContactUsError("Salesforce", s"Could not authenticate: Status code: ${response.code}. ${value.error} - ${value.error_description}")))
       })
   }
 
@@ -59,8 +57,7 @@ class SalesforceConnector(runRequest: HttpRequest => Either[ContactUsError, Http
         else
           decode[List[SFErrorDetails]](response.body, Some("List[SFErrorDetails]"))
             .flatMap(errors =>
-              Left(ContactUsError("Salesforce", s"Could not complete request. Status code: ${response.code}. ${errors.map(_.asString).mkString(", ")}"))
-            )
+              Left(ContactUsError("Salesforce", s"Could not complete request. Status code: ${response.code}. ${errors.map(_.asString).mkString(", ")}")))
       })
   }
 
